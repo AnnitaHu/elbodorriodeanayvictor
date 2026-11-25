@@ -285,7 +285,8 @@ background:linear-gradient(180deg,rgba(0,0,0,.6),transparent 16%,transparent 78%
 .f-bt{display:inline-block;margin-top:2cqw;padding:3.6cqw 6cqw;border:0;border-radius:3.6cqw;background:#fcf2e1;color:var(--negro);font:700 17.5px/1.2 var(--serif);text-decoration:none;cursor:pointer}
 .f-ok .f-lista{margin:0 0 4cqw;font-weight:400}
 .f-ok .f-carta h3{margin:0 0 7cqw}
-.f-carta.f-in{margin-top:14cqw;animation:fcarta 1.2s .6s both}
+.f-carta.f-in{animation:fcarta 1.2s .3s both}
+.f-ok .f-carta:not(:last-child){margin-bottom:12cqw}
 @keyframes fcarta{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.f-carta.f-in{animation:none}}
 </style>
@@ -386,8 +387,8 @@ background:linear-gradient(180deg,rgba(0,0,0,.6),transparent 16%,transparent 78%
     <p class="f-err" id="err" role="alert"></p>
     <button class="f-b" id="env" type="submit">ENVIAR RESPUESTA</button>
   </form>
-  <p class="f-ayuda" id="ayuda" hidden>¿Dudas o problemas? <a id="wa" href="#" target="_blank" rel="noopener">Escríbenos por WhatsApp</a></p>
   <div class="f-ok" id="ok" hidden aria-live="polite"></div>
+  <p class="f-ayuda" id="ayuda" hidden>¿Dudas o problemas? <a id="wa" href="#" target="_blank" rel="noopener">Escríbenos por WhatsApp</a></p>
 </section>
 
 </main>
@@ -447,7 +448,7 @@ background:linear-gradient(180deg,rgba(0,0,0,.6),transparent 16%,transparent 78%
   // URL del Apps Script publicado (…/exec). Vacío = MODO PRUEBA: no guarda nada y enseña un IBAN falso.
   var ENDPOINT='https://script.google.com/macros/s/AKfycbzz6Jeik8cLpDwJLkiYJ8z_IGHtexhPu9WzOY1AqoT4uXPOWv_9ksiePfwMrsOjlUxJGA/exec';
   // Contacto de apoyo: número de WhatsApp con prefijo y sin '+' (p. ej. '34600111222'). Vacío = no se muestra.
-  var CONTACTO={wa:'34627987086',txt:'Hola, os escribo por la invitación de la boda.'};
+  var CONTACTO={wa:'34627987086',txt:'Holaaaaaa futuros casados!!!! Tengo unas preguntitas, cuando podais me respondeis, por favor? Muchas gracias!'};
   var MSG_FALLO='¡Ups! Parece que tienes problemas con el pago de tu línea de móvil y la confirmación no se ha enviado de manera correcta. ¿Podemos ayudarte en algo y que no sea en pagar la factura pendiente?';
   var f=document.getElementById('rsvp');if(!f)return;
   var nom=document.getElementById('nom'),num=document.getElementById('num'),acomp=document.getElementById('acomp'),
@@ -491,17 +492,17 @@ background:linear-gradient(180deg,rgba(0,0,0,.6),transparent 16%,transparent 78%
   function aviso(h,txts,btn){
     document.documentElement.classList.add('sin-form');
     document.querySelector('.f-t').hidden=true;document.querySelector('.f-s').hidden=true;
-    f.hidden=true;if(ayuda)ayuda.hidden=true;ok.hidden=false;ok.innerHTML='';
+    f.hidden=true;ok.hidden=false;ok.innerHTML='';
     ok.appendChild(el('h3','',h));txts.forEach(function(t){ok.appendChild(el('p','',t))});if(btn)ok.appendChild(btn)}
   function noEnlace(){
     var b=null;if(waLink()){b=el('a','f-bt','Escribirnos por WhatsApp');b.href=waLink();b.target='_blank';b.rel='noopener'}
-    aviso('Falta tu enlace personal',['Para confirmar necesitamos el enlace personal que te enviamos por mensaje.','Si no lo encuentras, escríbenos y te lo volvemos a mandar.'],b)}
+    aviso('Falta tu enlace personal',['Para confirmar necesitamos el enlace personal que te enviamos por mensaje.','Si no lo encuentras, escríbenos y te lo volvemos a mandar.'],b);if(ayuda)ayuda.hidden=true}
   // IBAN (si lo hay) y, para la familia, su mensaje personal: solo después de confirmar la elección
-  function cierre(iban,msg){
+  function cierre(iban){
     var fr=document.createDocumentFragment();
     if(iban){fr.appendChild(el('p','f-cta','Si quieres tener un detalle con nosotros, aquí tienes nuestra cuenta:'));
       var b=el('button','f-iban',iban);b.type='button';var l=el('p','f-cp','toca para copiar el IBAN');fr.appendChild(b);fr.appendChild(l);copiar(b,l,iban.replace(/\s/g,''))}
-    var c=msg?carta(msg,'f-in'):null;if(c)fr.appendChild(c);return fr}
+    return fr}
   function previa(p,iban,msg){
     document.documentElement.classList.add('sin-form');
     var fam=!!msg,t=[];
@@ -513,7 +514,7 @@ background:linear-gradient(180deg,rgba(0,0,0,.6),transparent 16%,transparent 78%
     aviso(fam?'Ya tenemos tu elección':'Ya nos has respondido',t,b);
     var o=fam?1:2,nl=p.vendra==='si'?(p.personas||[]).length:0;
     for(var k=o;k<o+nl;k++)ok.children[k].className='f-lista';
-    if(p.vendra==='si')ok.insertBefore(cierre(iban,msg),b)}
+    if(p.vendra==='si'){ok.insertBefore(cierre(iban),b);var c=msg?carta(msg,'f-in'):null;if(c)ok.insertBefore(c,ok.firstChild)}}
   function setMax(n){maxAc=Math.max(0,Math.min(5,parseInt(n,10)||0));num.innerHTML='';
     for(var k=0;k<=maxAc;k++){var o=document.createElement('option');o.value=k;o.textContent=k===0?'Voy solo/a':(k===1?'1 acompañante':k+' acompañantes');num.appendChild(o)}
     acomp.hidden=maxAc===0;sync()}
@@ -547,15 +548,16 @@ background:linear-gradient(180deg,rgba(0,0,0,.6),transparent 16%,transparent 78%
     function fb(){var a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();try{document.execCommand('copy');done()}catch(e){l.textContent='mantén pulsado para copiar'}document.body.removeChild(a)}
     b.addEventListener('click',function(){navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t).then(done,fb):fb()})}
   function exito(d,v,nombre,msg,n){
-    document.documentElement.classList.add('sin-form');if(ayuda)ayuda.hidden=true;
+    document.documentElement.classList.add('sin-form');
     f.hidden=true;ok.hidden=false;ok.innerHTML='';
+    var cm=(v==='si'&&msg)?carta(msg,'f-in'):null;if(cm)ok.appendChild(cm); // familia: primero su mensaje, después el agradecimiento y el IBAN
     function corazon(){var s=document.getElementById('corazon-fin'),h=document.createElement('img');h.className='f-heart';h.alt='';h.setAttribute('aria-hidden','true');if(s)h.src=s.src;ok.appendChild(h)}
     if(v==='si'){ok.appendChild(el('h3','f-rojo','¡Gracias, '+tc(nombre.split(' ')[0])+'!'));
       ok.appendChild(el('p','',esFam?(n>1?'Ya tenemos vuestra\u00a0elección.':'Ya tenemos tu\u00a0elección.'):'Nos hace mucha ilusión que formes parte de\u00a0nuestra historia.'));
       ok.appendChild(el('p','','¡Nos vemos el 9\u00a0de enero!'));corazon()}
     else{ok.appendChild(el('p','','Sentimos mucho que no\u00a0puedas venir.'));
       ok.appendChild(el('h3','','Gracias por avisarnos,'));ok.appendChild(el('p','f-rojo','te echaremos de\u00a0menos.'));corazon()}
-    if(v==='si')ok.appendChild(cierre((d&&d.iban)||'',msg));
+    if(v==='si')ok.appendChild(cierre((d&&d.iban)||''));
     ok.scrollIntoView({behavior:'smooth',block:esFam?'start':'center'})}
   f.addEventListener('submit',function(e){
     e.preventDefault();err.textContent='';
