@@ -550,7 +550,7 @@ background:linear-gradient(180deg,rgba(0,0,0,.6),transparent 16%,transparent 78%
   function exito(d,v,nombre,msg,n){
     document.documentElement.classList.add('sin-form');
     f.hidden=true;ok.hidden=false;ok.innerHTML='';
-    var cm=(v==='si'&&msg)?carta(msg,'f-in'):null;if(cm)ok.appendChild(cm); // familia: primero su mensaje, después el agradecimiento y el IBAN
+    var cm=(v==='si'&&msg)?carta(msg,'f-in'):null;if(cm){ok.appendChild(cm);document.querySelector('.f-t').hidden=true;document.querySelector('.f-s').hidden=true} // familia: primero su mensaje, después el agradecimiento y el IBAN
     function corazon(){var s=document.getElementById('corazon-fin'),h=document.createElement('img');h.className='f-heart';h.alt='';h.setAttribute('aria-hidden','true');if(s)h.src=s.src;ok.appendChild(h)}
     if(v==='si'){ok.appendChild(el('h3','f-rojo','¡Gracias, '+tc(nombre.split(' ')[0])+'!'));
       ok.appendChild(el('p','',esFam?(n>1?'Ya tenemos vuestra\u00a0elección.':'Ya tenemos tu\u00a0elección.'):'Nos hace mucha ilusión que formes parte de\u00a0nuestra historia.'));
