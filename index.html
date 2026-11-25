@@ -284,6 +284,10 @@ background:linear-gradient(180deg,rgba(0,0,0,.6),transparent 16%,transparent 78%
 .f-ayuda a{color:#fcf2e1}
 .f-bt{display:inline-block;margin-top:2cqw;padding:3.6cqw 6cqw;border:0;border-radius:3.6cqw;background:#fcf2e1;color:var(--negro);font:700 17.5px/1.2 var(--serif);text-decoration:none;cursor:pointer}
 .f-ok .f-lista{margin:0 0 4cqw;font-weight:400}
+.f-ok .f-carta h3{margin:0 0 7cqw}
+.f-carta.f-in{margin-top:14cqw;animation:fcarta 1.2s .6s both}
+@keyframes fcarta{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.f-carta.f-in{animation:none}}
 </style>
 <noscript><style>#intro{display:none}html.intro,html.intro body{overflow:auto}</style></noscript>
 </head>
@@ -471,13 +475,16 @@ background:linear-gradient(180deg,rgba(0,0,0,.6),transparent 16%,transparent 78%
     var n=Math.min(maxAc,parseInt(num.value,10)||0);
     while(pers.children.length<1+n)pers.appendChild(bloque(pers.children.length));
     while(pers.children.length>1+n)pers.removeChild(pers.lastChild)}
-  function mensajePersonal(t){
-    var l=String(t).split(/\r?\n/).map(function(s){return s.trim()}).filter(Boolean);if(!l.length)return;document.documentElement.classList.add('sin-form');
-    document.querySelector('.f-t').hidden=true;document.querySelector('.f-s').hidden=true;
-    f.hidden=true;ok.hidden=false;ok.innerHTML='';
+  function carta(t,cls){
+    var l=String(t).split(/\r?\n/).map(function(s){return s.trim()}).filter(Boolean);if(!l.length)return null;
     var hd=l[0],cu=l.slice(1);
     if(hd.length>70){var mm=hd.match(/^([^,.:!?¿¡]{1,24}[,:])\s+(.+)$/);if(mm){hd=mm[1];cu=[mm[2].charAt(0).toUpperCase()+mm[2].slice(1)].concat(cu)}else{cu=l;hd=''}}
-    if(hd)ok.appendChild(el('h3','',hd));cu.forEach(function(s){ok.appendChild(el('p','',s))})}
+    var c=el('div','f-carta'+(cls?' '+cls:''));
+    if(hd)c.appendChild(el('h3','',hd));cu.forEach(function(s){c.appendChild(el('p','',s))});return c}
+  function mensajePersonal(t){
+    var c=carta(t);if(!c)return;document.documentElement.classList.add('sin-form');
+    document.querySelector('.f-t').hidden=true;document.querySelector('.f-s').hidden=true;
+    f.hidden=true;ok.hidden=false;ok.innerHTML='';ok.appendChild(c)}
   function waLink(){return CONTACTO.wa?'https://wa.me/'+CONTACTO.wa+'?text='+encodeURIComponent(CONTACTO.txt):''}
   var wa=document.getElementById('wa'),ayuda=document.getElementById('ayuda');
   if(waLink()&&wa&&ayuda){wa.href=waLink();ayuda.hidden=false}
@@ -489,48 +496,67 @@ background:linear-gradient(180deg,rgba(0,0,0,.6),transparent 16%,transparent 78%
   function noEnlace(){
     var b=null;if(waLink()){b=el('a','f-bt','Escribirnos por WhatsApp');b.href=waLink();b.target='_blank';b.rel='noopener'}
     aviso('Falta tu enlace personal',['Para confirmar necesitamos el enlace personal que te enviamos por mensaje.','Si no lo encuentras, escríbenos y te lo volvemos a mandar.'],b)}
-  function previa(p,nombre){
+  // IBAN (si lo hay) y, para la familia, su mensaje personal: solo después de confirmar la elección
+  function cierre(iban,msg){
+    var fr=document.createDocumentFragment();
+    if(iban){fr.appendChild(el('p','f-cta','Si quieres tener un detalle con nosotros, aquí tienes nuestra cuenta:'));
+      var b=el('button','f-iban',iban);b.type='button';var l=el('p','f-cp','toca para copiar el IBAN');fr.appendChild(b);fr.appendChild(l);copiar(b,l,iban.replace(/\s/g,''))}
+    var c=msg?carta(msg,'f-in'):null;if(c)fr.appendChild(c);return fr}
+  function previa(p,iban,msg){
     document.documentElement.classList.add('sin-form');
-    var t=[];
-    if(p.vendra==='si'){t.push('Nos dijiste que vienes. ¡Qué ilusión!');
+    var fam=!!msg,t=[];
+    if(p.vendra==='si'){if(!fam)t.push('Nos dijiste que vienes. ¡Qué ilusión!');
       (p.personas||[]).forEach(function(q){t.push(q.nombre+' · '+(q.principal==='Ternera'?'meloso de ternera':q.principal==='Dorada'?'suquet de dorada':''))})}
     else t.push('Nos dijiste que no podrás venir.');
-    var b=el('button','f-bt','Cambiar mi respuesta');b.type='button';
+    var b=el('button','f-bt',fam?'Cambiar mi elección':'Cambiar mi respuesta');b.type='button';
     b.addEventListener('click',function(){document.documentElement.classList.remove('sin-form');document.querySelector('.f-t').hidden=false;document.querySelector('.f-s').hidden=false;ok.hidden=true;f.hidden=false;if(ayuda&&waLink())ayuda.hidden=false;f.scrollIntoView({behavior:'smooth',block:'start'})});
-    aviso('Ya nos has respondido',t,b);
-    if(ok.children.length>2){for(var k=2;k<ok.children.length-1;k++)ok.children[k].className='f-lista'}}
+    aviso(fam?'Ya tenemos tu elección':'Ya nos has respondido',t,b);
+    var o=fam?1:2,nl=p.vendra==='si'?(p.personas||[]).length:0;
+    for(var k=o;k<o+nl;k++)ok.children[k].className='f-lista';
+    if(p.vendra==='si')ok.insertBefore(cierre(iban,msg),b)}
   function setMax(n){maxAc=Math.max(0,Math.min(5,parseInt(n,10)||0));num.innerHTML='';
     for(var k=0;k<=maxAc;k++){var o=document.createElement('option');o.value=k;o.textContent=k===0?'Voy solo/a':(k===1?'1 acompañante':k+' acompañantes');num.appendChild(o)}
     acomp.hidden=maxAc===0;sync()}
   setMax(ENDPOINT?0:1);
+  // Modo familia: tienen mensaje personal y no confirman asistencia. Eligen plato principal y, al confirmarlo, ven el IBAN y después su mensaje.
+  var flTxt=(document.querySelector('.fl')||{}).textContent||'15 de diciembre',esFam=false,famMsg='',btnTxt='ENVIAR RESPUESTA';
+  function modoFamilia(d){
+    esFam=true;famMsg=d.mensaje;
+    document.querySelector('.f-t').textContent='Sabemos que estarás a\u00a0nuestro lado';
+    document.querySelector('.f-s').innerHTML='solo elige tu plato principal<br>antes del <span class="fl">'+flTxt+'</span>';
+    var fv=f.querySelector('.f-v');if(fv)fv.style.display='none';
+    document.getElementById('v1').checked=true;sync();
+    btnTxt='CONFIRMAR MI ELECCIÓN';env.textContent=btnTxt;
+    var fab=document.querySelector('.fab');if(fab)fab.textContent='elige tu plato ↓';
+    var rt=document.querySelector('.rsvp-t');if(rt)rt.innerHTML='elige tu <b>plato</b>'}
+  function aplicar(d){
+    if(!d||!d.nombre){noEnlace();return}
+    if(d.mensaje&&!d.familia){mensajePersonal(d.mensaje);return}
+    nom.value=tc(d.nombre);
+    lista=String(d.acomp||'').split(/\s*(?:\+|,|;|\by\b)\s*/i).map(function(s){return s.trim()}).filter(function(s){return s&&!/^sus?\s/i.test(s)}).map(tc);
+    setMax(d.max);
+    if(d.familia&&d.mensaje)modoFamilia(d);
+    if(d.previa)previa(d.previa,d.iban||'',esFam?famMsg:'')}
 
   if(ENDPOINT&&!code)noEnlace();
-  if(ENDPOINT&&code){fetch(ENDPOINT+'?i='+encodeURIComponent(code)).then(function(r){return r.json()}).then(function(d){
-    if(!d||!d.nombre){noEnlace();return}
-    if(d.mensaje){mensajePersonal(d.mensaje);return}
-    if(d.previa){nom.value=tc(d.nombre);previa(d.previa,d.nombre)}
-    if(d&&d.nombre)nom.value=tc(d.nombre);
-    lista=String(d&&d.acomp||'').split(/\s*(?:\+|,|;|\by\b)\s*/i).map(function(s){return s.trim()}).filter(function(s){return s&&!/^sus?\s/i.test(s)}).map(tc);
-    setMax(d&&d.max)}).catch(function(){})}
+  if(ENDPOINT&&code){fetch(ENDPOINT+'?i='+encodeURIComponent(code)).then(function(r){return r.json()}).then(aplicar).catch(function(){})}
   [].forEach.call(f.querySelectorAll('[name=vendra]'),function(r){r.addEventListener('change',function(){
     var no=vendra()==='no';acomp.hidden=no||maxAc===0;if(no)num.value='0';sync()})});
   num.addEventListener('change',sync);
   function copiar(b,l,t){function done(){l.textContent='¡IBAN copiado!';l.classList.add('ok');setTimeout(function(){l.textContent='toca para copiar el IBAN';l.classList.remove('ok')},2200)}
     function fb(){var a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();try{document.execCommand('copy');done()}catch(e){l.textContent='mantén pulsado para copiar'}document.body.removeChild(a)}
     b.addEventListener('click',function(){navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t).then(done,fb):fb()})}
-  function exito(d,v,nombre){
+  function exito(d,v,nombre,msg,n){
     document.documentElement.classList.add('sin-form');if(ayuda)ayuda.hidden=true;
     f.hidden=true;ok.hidden=false;ok.innerHTML='';
     function corazon(){var s=document.getElementById('corazon-fin'),h=document.createElement('img');h.className='f-heart';h.alt='';h.setAttribute('aria-hidden','true');if(s)h.src=s.src;ok.appendChild(h)}
     if(v==='si'){ok.appendChild(el('h3','f-rojo','¡Gracias, '+tc(nombre.split(' ')[0])+'!'));
-      ok.appendChild(el('p','','Nos hace mucha ilusión que formes parte de\u00a0nuestra historia.'));
+      ok.appendChild(el('p','',esFam?(n>1?'Ya tenemos vuestra\u00a0elección.':'Ya tenemos tu\u00a0elección.'):'Nos hace mucha ilusión que formes parte de\u00a0nuestra historia.'));
       ok.appendChild(el('p','','¡Nos vemos el 9\u00a0de enero!'));corazon()}
     else{ok.appendChild(el('p','','Sentimos mucho que no\u00a0puedas venir.'));
       ok.appendChild(el('h3','','Gracias por avisarnos,'));ok.appendChild(el('p','f-rojo','te echaremos de\u00a0menos.'));corazon()}
-    if(v==='si'&&d&&d.iban){
-      ok.appendChild(el('p','f-cta','Si quieres tener un detalle con nosotros, aquí tienes nuestra cuenta:'));
-      var b=el('button','f-iban',d.iban);b.type='button';var l=el('p','f-cp','toca para copiar el IBAN');ok.appendChild(b);ok.appendChild(l);copiar(b,l,d.iban.replace(/\s/g,''))}
-    ok.scrollIntoView({behavior:'smooth',block:'center'})}
+    if(v==='si')ok.appendChild(cierre((d&&d.iban)||'',msg));
+    ok.scrollIntoView({behavior:'smooth',block:esFam?'start':'center'})}
   f.addEventListener('submit',function(e){
     e.preventDefault();err.textContent='';
     if(document.getElementById('web').value)return;
@@ -546,11 +572,11 @@ background:linear-gradient(180deg,rgba(0,0,0,.6),transparent 16%,transparent 78%
     }else personas=[{nombre:nombre,principal:'',alergias:''}];
     var d={codigo:code,vendra:v,mensaje:document.getElementById('msg').value.trim(),personas:personas};
     env.disabled=true;env.textContent='ENVIANDO…';
-    function fin(){env.disabled=false;env.textContent='ENVIAR RESPUESTA'}
-    if(!ENDPOINT){setTimeout(function(){fin();exito({iban:'ES00 0000 0000 0000 0000 0000 (prueba)'},v,nombre)},700);return}
+    function fin(){env.disabled=false;env.textContent=btnTxt}
+    if(!ENDPOINT){setTimeout(function(){fin();exito({iban:'ES00 0000 0000 0000 0000 0000 (prueba)'},v,nombre,esFam?famMsg:'',personas.length)},700);return}
     fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(d)})
       .then(function(r){return r.json()}).then(function(r){fin();
-        if(r&&r.ok)exito(r,v,nombre);else err.textContent=(r&&r.error&&!/^No hemos podido/.test(r.error))?r.error:MSG_FALLO})
+        if(r&&r.ok)exito(r,v,nombre,esFam?famMsg:'',personas.length);else err.textContent=(r&&r.error&&!/^No hemos podido/.test(r.error))?r.error:MSG_FALLO})
       .catch(function(){fin();err.textContent=MSG_FALLO});
   });
 })();
