@@ -468,9 +468,11 @@ background:linear-gradient(180deg,rgba(0,0,0,.6),transparent 16%,transparent 78%
   var nom=document.getElementById('nom'),num=document.getElementById('num'),acomp=document.getElementById('acomp'),
       det=document.getElementById('det'),pers=document.getElementById('pers'),
       err=document.getElementById('err'),env=document.getElementById('env'),ok=document.getElementById('ok'),
-      code=(new URLSearchParams(location.search)).get('i')||'',lista=[],maxAc=0;
+      code=(new URLSearchParams(location.search)).get('i')||'',lista=[],maxAc=0,ninos=[];
   var MENU=[['Ternera','Meloso de ternera','a baja temperatura con jugo de su rustido, Pedro Ximénez y gratén de patatas trufado'],
             ['Dorada','Suquet de dorada','con gambas, alcachofa de Jerusalén y picada tradicional catalana']];
+  function nq(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim()}
+  function esNino(n){n=nq(n);return !!n&&ninos.some(function(k){return n===k||n.indexOf(k+' ')===0})}
   function tc(s){return String(s||'').toLowerCase().replace(/(^|[\s'-])\S/g,function(c){return c.toUpperCase()})}
   function el(t,c,txt){var e=document.createElement(t);if(c)e.className=c;if(txt)e.textContent=txt;return e}
   function vendra(){var r=f.querySelector('[name=vendra]:checked');return r?r.value:''}
@@ -482,6 +484,10 @@ background:linear-gradient(180deg,rgba(0,0,0,.6),transparent 16%,transparent 78%
     var fs=el('fieldset','f-p');fs.appendChild(el('legend','',i===0?'Tu plato principal':'Su plato principal'));
     MENU.forEach(function(m,k){var r=document.createElement('input');r.type='radio';r.name='p'+i;r.value=m[0];r.id='p'+i+k;
       var l=document.createElement('label');l.htmlFor=r.id;l.appendChild(el('strong','',m[1]));l.appendChild(el('span','',m[2]));fs.appendChild(r);fs.appendChild(l)});
+    if(i>0){var ri=document.createElement('input');ri.type='radio';ri.name='p'+i;ri.value='Infantil';ri.id='p'+i+'2';
+      var li=document.createElement('label');li.htmlFor=ri.id;li.appendChild(el('strong','','Menú infantil'));fs.appendChild(ri);fs.appendChild(li);
+      var vis=function(){var s=esNino(n.value);ri.style.display=li.style.display=s?'':'none';if(!s&&ri.checked)ri.checked=false};
+      vis();n.addEventListener('input',vis)}
     b.appendChild(fs);
     var la=el('label','','Alergias o intolerancias (opcional)');la.htmlFor='a'+i;var a=document.createElement('input');a.type='text';a.id='a'+i;a.maxLength=200;
     b.appendChild(la);b.appendChild(a);return b}
@@ -521,7 +527,7 @@ background:linear-gradient(180deg,rgba(0,0,0,.6),transparent 16%,transparent 78%
     document.documentElement.classList.add('sin-form');
     var fam=!!msg,t=[];
     if(p.vendra==='si'){if(!fam)t.push('Nos dijiste que vienes. ¡Qué ilusión!');
-      (p.personas||[]).forEach(function(q){t.push(q.nombre+' · '+(q.principal==='Ternera'?'meloso de ternera':q.principal==='Dorada'?'suquet de dorada':''))})}
+      (p.personas||[]).forEach(function(q){t.push(q.nombre+' · '+(q.principal==='Ternera'?'meloso de ternera':q.principal==='Dorada'?'suquet de dorada':q.principal==='Infantil'?'menú infantil':''))})}
     else t.push('Nos dijiste que no podrás venir.');
     var b=el('button','f-bt',fam?'Cambiar mi elección':'Cambiar mi respuesta');b.type='button';
     b.addEventListener('click',function(){document.documentElement.classList.remove('sin-form');document.querySelector('.f-t').hidden=false;document.querySelector('.f-s').hidden=false;ok.hidden=true;f.hidden=false;if(ayuda&&waLink())ayuda.hidden=false;f.scrollIntoView({behavior:'smooth',block:'start'})});
@@ -549,6 +555,7 @@ background:linear-gradient(180deg,rgba(0,0,0,.6),transparent 16%,transparent 78%
     if(d.mensaje&&!d.familia){mensajePersonal(d.mensaje);return}
     nom.value=tc(d.nombre);
     lista=String(d.acomp||'').split(/\s*(?:\+|,|;|\by\b)\s*/i).map(function(s){return s.trim()}).filter(function(s){return s&&!/^sus?\s/i.test(s)}).map(tc);
+    ninos=(d.ninos||[]).map(nq).filter(Boolean);
     setMax(d.max);
     if(d.familia&&d.mensaje)modoFamilia(d);
     if(d.previa)previa(d.previa,d.iban||'',esFam?famMsg:'')}
